@@ -524,7 +524,7 @@ class CPU
 
     0
   end
-
+    
   def BEQ()
     if (get_status(:Z) == 1)
       @cycles += 1
@@ -542,7 +542,7 @@ class CPU
 
   def BIT()
     fetch()
-    temp = a & @fetched
+    temp = @registers[:a] & @fetched
     set_status(:Z, (temp & 0x00FF) == 0)
     set_status(:N, @fetched & (1 << 7))
     set_status(:V, @fetched & (1 << 6))
@@ -583,7 +583,6 @@ class CPU
 
   def BPL()
     if (get_status(:N) == 0)
-      #binding.pry
       @cycles += 1
 
       @addr_abs = @registers[:program_counter] + @addr_rel
@@ -1085,8 +1084,6 @@ class CPU
   def clock
     if (@cycles == 0)
       @opcode = @bus.read(@registers[:program_counter])
-
-      # binding.pry
 
       puts "[ #{@opcode.to_s(16).upcase} ] $#{@opcode} -> #{@lookup[@opcode][:name]}"
 

@@ -1,5 +1,5 @@
 class Cartridge
-  attr_accessor :rom, :vram, :prg_memory, :chr_memory, :mapper, :prg_banks
+  attr_accessor :rom, :vram, :prg_memory, :chr_memory, :mapper, :prg_banks, :mirror
 
   def initialize(filename)
     header = {
@@ -39,6 +39,12 @@ class Cartridge
     @mapper = (((rom_result[6].to_i & 0xF0) >> 4) | rom_result[7].to_i & 0xF0)
     is_horizontal_mirror = !(rom_result[6].to_i & 0x01)
 
+    if is_horizontal_mirror
+      @mirror = 'horizontal'
+    else
+      @mirror = 'vertical'
+    end
+
     display_cartridge_info(filename, @prg_banks,  @chr_banks,  @mapper)
 
    if @mapper != 0
@@ -70,7 +76,9 @@ class Cartridge
       end
     end
 
-    @vram = rom_result[16+0x400f*@prg_banks..0x2000*@chr_banks]
+    aa = 16 + 0x400f*@prg_banks
+
+    @vram = rom_result[aa..aa + 0x2000*@chr_banks]
   end
 
   def cpu_read(address)
@@ -106,14 +114,17 @@ class Cartridge
     end
   end
 
-  def ppu_write
+  def ppu_write(address, data)
     mapped_address = 0x00
+    if address >= 0x8000 && address <= 0xFFFF
+      mapped_address = address & (@prg_banks > 1 ? 0x7FFF : 0x3FFF);
 
-    if address > 0x8000 && address <= 0x1FFF
-      @data = @chr_memory[mapped_address]
+      @chr_memory[mapped_address] = data
 
       return true
     end
+
+    false
   end
 
   def display_cartridge_info(filename, prg_chunks, chr_chunks, mapper)

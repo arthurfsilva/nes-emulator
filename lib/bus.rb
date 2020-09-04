@@ -21,8 +21,7 @@ class Bus
       return @ppu.read(address & 0x0007)
     end
 
-    return memory[address]
-    # return 0x00
+    memory[address] || 0
   end
 
   def write(address, data)
@@ -49,7 +48,6 @@ class Bus
     low = read(0xFFFC)
 
     @cpu.registers[:program_counter] = (high << 8) | low
-
     @ppu.connect_cartridge(@cartridge)
   end
 
@@ -65,6 +63,11 @@ class Bus
       @cpu.clock
     end
 
+    if @ppu.nmi
+      ppu.nmi = false
+      cpu.nmi();
+    end
+    
     @system_clock += 1
   end
 end
